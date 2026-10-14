@@ -24,7 +24,7 @@
  * 改完本文件后，把 index.html 里 css/js 的 ?v= 数字加一，避免旧缓存。
  */
 window.SURVEY_CONFIG = {
-  FEISHU_WEBHOOK_URL: "",
+  FEISHU_WEBHOOK_URL: "https://hvtg4neiebi.feishuapp.com/app/app_17g16djq8cb/__runtime__/api/v1/automation/survey-ingest/runtime/webhook/3bf3b4a96b5d4ae0a27a9bebd9fbf172",
   FEISHU_WEBHOOK_MODE: "bitable",
   FEISHU_BITABLE: {
     appId: "",
