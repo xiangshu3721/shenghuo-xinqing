@@ -30,11 +30,10 @@
         type: "single",
         scored: false,
         options: [
-          { id: "50", label: "50～54岁" },
-          { id: "55", label: "55～59岁" },
-          { id: "60", label: "60～64岁" },
-          { id: "65", label: "65～69岁" },
-          { id: "70", label: "70岁以上" }
+          { id: "45", label: "45～54岁" },
+          { id: "55", label: "55～64岁" },
+          { id: "65", label: "65～74岁" },
+          { id: "75", label: "75岁及以上" }
         ]
       },
       {

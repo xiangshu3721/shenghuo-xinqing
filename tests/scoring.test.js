@@ -31,7 +31,7 @@ function optionIdByScore(qid, score) {
 
 function baseline() {
   var answers = {
-    q1: "60",
+    q1: "55",
     q2: "partner",
     q3: "retired",
     q15: ["none"]
@@ -256,7 +256,7 @@ run("提交数据含全部答案与画像", function () {
   });
   assert.strictEqual(payload.userId, "sx-test");
   assert.strictEqual(payload.submittedAtLocal.indexOf("2026"), 0);
-  assert.strictEqual(payload.fields["年龄段"], "60～64岁");
+  assert.strictEqual(payload.fields["年龄段"], "55～64岁");
   assert.strictEqual(payload.fields["居住"], "和老伴一起");
   assert.strictEqual(payload.fields["生活状态"], "已退休");
   assert.strictEqual(payload.fields.Q4, "经常");
@@ -286,6 +286,27 @@ run("提交数据含全部答案与画像", function () {
     webhookUrl: "",
     bitable: { appId: "a", appSecret: "b", appToken: "c", tableId: "d" }
   }), "bitable");
+});
+
+run("年龄从45岁起，四档写入年龄段", function () {
+  var q1 = questions[0];
+  assert.deepStrictEqual(q1.options.map(function (option) { return option.label; }), [
+    "45～54岁",
+    "55～64岁",
+    "65～74岁",
+    "75岁及以上"
+  ]);
+  ["45", "55", "65", "75"].forEach(function (id) {
+    var answers = baseline();
+    answers.q1 = id;
+    var label = q1.options.find(function (option) { return option.id === id; }).label;
+    var payload = submitApi.buildPayload(answers, scoring.scoreSurvey(answers, questions), questions, {
+      userId: "sx-age",
+      submittedAt: "2026-10-14T02:00:00.000Z"
+    });
+    assert.strictEqual(payload.fields["年龄段"], label);
+    assert.strictEqual(payload.profile.summary.indexOf(label), 0);
+  });
 });
 
 run("题目数量与多选上限", function () {
