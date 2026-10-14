@@ -242,7 +242,7 @@ run("结果三句话无禁词、无数字", function () {
     assertNoBanned(profile.followUp, "followUp");
     assertNoBanned(profile.risk.note, "risk");
     assert.strictEqual(/\d/.test(text), false, text);
-    assert.ok(text.indexOf("接下来会根据大家的真实需要安排聊天、兴趣、健康和生活成长方面的活动。") !== -1);
+    assert.ok(text.indexOf("后面会安排聊天、兴趣和养生。") !== -1);
     assert.ok(text.indexOf("谢谢您") !== -1);
   });
 });
@@ -259,7 +259,7 @@ run("提交数据含全部答案与画像", function () {
   assert.strictEqual(payload.fields["年龄段"], "60～64岁");
   assert.strictEqual(payload.fields["居住"], "和老伴一起");
   assert.strictEqual(payload.fields["生活状态"], "已退休");
-  assert.strictEqual(payload.fields.Q4, "经常有这种感觉");
+  assert.strictEqual(payload.fields.Q4, "经常");
   assert.strictEqual(payload.fields.Q8, "基本可以");
   assert.strictEqual(payload.fields.Q11, "经常联系");
   assert.strictEqual(payload.fields.Q15, "倾听聊天、兴趣活动");
@@ -273,6 +273,14 @@ run("提交数据含全部答案与画像", function () {
   assert.ok(body.content.text.indexOf("Q15：倾听聊天、兴趣活动") !== -1);
   var bitable = submitApi.buildFeishuBody(payload, "bitable");
   assert.strictEqual(bitable.fields["用户ID"], "sx-test");
+  assert.strictEqual(bitable.msg_type, undefined);
+  [
+    "用户ID", "提交时间", "年龄段", "居住", "生活状态",
+    "Q4", "Q5", "Q6", "Q7", "Q8", "Q9", "Q10", "Q11", "Q12", "Q13", "Q14", "Q15",
+    "六维", "核心需求TOP3", "用户类型", "建议跟进", "风险提示", "需求总结"
+  ].forEach(function (key) {
+    assert.ok(Object.prototype.hasOwnProperty.call(bitable.fields, key), "缺少字段 " + key);
+  });
   assert.strictEqual(submitApi.deliveryPlan({ webhookUrl: "", bitable: {} }), "local");
   assert.strictEqual(submitApi.deliveryPlan({
     webhookUrl: "",

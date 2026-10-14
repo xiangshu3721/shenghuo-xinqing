@@ -1,19 +1,19 @@
 /**
  * 飞书接入配置
  * --------------------
- * 静态网页里的配置任何人都能看到。请优先用「群自定义机器人 Webhook」。
- * 不要把拥有高权限的企业应用密钥放进这里。
+ * 静态网页里的配置任何人都能看到。多维表格自动化地址优先；不要把高权限密钥放进来。
  *
- * 方式一（推荐）：飞书群 → 设置 → 群机器人 → 自定义机器人 → 复制 Webhook
+ * 方式一（当前准备好的）：多维表格自动化「接收到 webhook 时」
+ *   把自动化地址填进 FEISHU_WEBHOOK_URL
+ *   FEISHU_WEBHOOK_MODE 保持 "bitable"
+ *   请求体为 { "fields": { "用户ID", "提交时间", "年龄段", "居住", "生活状态",
+ *     "Q4"…"Q15", "六维", "核心需求TOP3", "用户类型", "建议跟进", "风险提示", "需求总结" } }
+ *   表格里先建好这些同名文本字段。
+ *
+ * 方式二：飞书群自定义机器人
  *   FEISHU_WEBHOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx"
  *   FEISHU_WEBHOOK_MODE = "bot"
  *   调查结果会以一条文本消息发到该群。
- *
- * 方式二：多维表格自动化「接收到 webhook 时」
- *   把自动化提供的地址填进 FEISHU_WEBHOOK_URL
- *   FEISHU_WEBHOOK_MODE = "bitable"
- *   请求体为 { "fields": { "用户ID": "...", "提交时间": "...", ... } }
- *   请在多维表格里先建好同名的文本字段。
  *
  * 方式三：开放平台多维表格 API（浏览器可能被跨域拦住，且密钥会公开）
  *   留空 FEISHU_WEBHOOK_URL，填 FEISHU_BITABLE 四项。
@@ -25,7 +25,7 @@
  */
 window.SURVEY_CONFIG = {
   FEISHU_WEBHOOK_URL: "",
-  FEISHU_WEBHOOK_MODE: "bot",
+  FEISHU_WEBHOOK_MODE: "bitable",
   FEISHU_BITABLE: {
     appId: "",
     appSecret: "",

@@ -30,8 +30,8 @@ body {
   color: var(--ink);
   background: var(--paper-deep);
   font-family: var(--sans);
-  font-size: 18px;
-  line-height: 1.65;
+  font-size: 22px;
+  line-height: 1.8;
 }
 
 button,
@@ -95,17 +95,19 @@ button {
 h1 {
   margin: 0;
   font-family: var(--serif);
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   letter-spacing: 0.04em;
   color: var(--green);
   text-align: center;
 }
 
 .lede {
-  margin: 18px 0 0;
-  font-size: 18px;
+  margin: 20px 0 0;
+  font-size: 24px;
+  line-height: 1.7;
+  text-align: center;
   color: var(--ink);
 }
 
@@ -116,14 +118,15 @@ h1 {
   background: var(--card);
   border: 1px solid var(--line);
   color: var(--green);
-  font-size: 18px;
+  font-size: 24px;
+  line-height: 1.6;
   text-align: center;
   box-shadow: var(--shadow);
 }
 
 .quiet {
   margin: 14px 0 0;
-  font-size: 18px;
+  font-size: 22px;
   color: var(--ink-soft);
   text-align: center;
 }
@@ -134,12 +137,12 @@ h1 {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 18px;
+  font-size: 22px;
   color: var(--green);
 }
 
 .track {
-  height: 8px;
+  height: 12px;
   margin-top: 8px;
   border-radius: 999px;
   background: #efe4d4;
@@ -155,14 +158,16 @@ h1 {
 .kicker {
   min-height: 1.4em;
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: 22px;
+  line-height: 1.5;
   color: var(--gold-ink);
 }
 
 .kicker-spacer { visibility: hidden; }
 
 .question h1 {
-  font-size: 22px;
+  font-size: 30px;
+  line-height: 1.45;
   text-align: left;
   letter-spacing: 0;
 }
@@ -174,8 +179,9 @@ h1 {
 .help,
 .count,
 .hint {
-  margin: 10px 0 0;
-  font-size: 18px;
+  margin: 12px 0 0;
+  font-size: 22px;
+  line-height: 1.6;
 }
 
 .foot .hint {
@@ -197,14 +203,14 @@ h1 {
 .options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .option {
   width: 100%;
-  min-height: 60px;
-  padding: 12px 14px;
+  min-height: 76px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -218,19 +224,19 @@ h1 {
 }
 
 .option-label {
-  font-size: 18px;
+  font-size: 24px;
   line-height: 1.45;
 }
 
 .tick {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid var(--gold);
   display: grid;
   place-items: center;
-  font-size: 16px;
+  font-size: 22px;
   color: transparent;
 }
 
@@ -263,32 +269,32 @@ h1 {
 }
 
 .btn-primary {
-  min-height: 58px;
+  min-height: 68px;
   border: 2px solid var(--gold);
   background: var(--green);
   color: #fffaf3;
-  font-size: 20px;
+  font-size: 26px;
   letter-spacing: 0.08em;
 }
 
 .btn-primary:active { background: var(--green-deep); }
 
 .btn-ghost {
-  min-height: 52px;
+  min-height: 60px;
   margin-top: 10px;
   border: 2px solid var(--green);
   background: transparent;
   color: var(--green);
-  font-size: 18px;
+  font-size: 22px;
 }
 
 .btn-text {
-  min-height: 48px;
+  min-height: 56px;
   margin-top: 8px;
   border: none;
   background: transparent;
   color: var(--green);
-  font-size: 18px;
+  font-size: 22px;
   text-decoration: underline;
   text-underline-offset: 4px;
 }
@@ -297,7 +303,7 @@ h1 {
 
 .hero-result { padding-top: 8px; }
 
-.hero-result h1 { font-size: 28px; }
+.hero-result h1 { font-size: 34px; }
 
 .feedback {
   margin-top: 8px;
@@ -305,15 +311,15 @@ h1 {
 }
 
 .feedback p {
-  margin: 0 0 14px;
-  font-size: 20px;
-  line-height: 1.7;
+  margin: 0 0 18px;
+  font-size: 26px;
+  line-height: 1.75;
 }
 
 .fine-print {
   margin: 8px 0 0;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 18px;
+  line-height: 1.6;
   text-align: center;
   color: var(--ink-soft);
 }
@@ -321,12 +327,18 @@ h1 {
 @media (min-width: 390px) {
   .body { padding-left: 20px; padding-right: 20px; }
   .foot { padding-left: 20px; padding-right: 20px; }
-  .question h1 { font-size: 24px; }
+  h1 { font-size: 40px; }
+  .question h1 { font-size: 32px; }
+  .option-label { font-size: 26px; }
 }
 
 @media (max-width: 340px) {
-  h1 { font-size: 28px; }
-  .question h1 { font-size: 20px; }
+  h1 { font-size: 32px; }
+  .lede,
+  .duration { font-size: 22px; }
+  .question h1 { font-size: 26px; }
+  .option { min-height: 72px; }
+  .option-label { font-size: 22px; }
 }
 
 @media (min-width: 840px) {

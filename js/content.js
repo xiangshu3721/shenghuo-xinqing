@@ -12,22 +12,21 @@
   }
 })(typeof window !== "undefined" ? window : null, function () {
   var often = [
-    { id: "often", label: "经常有这种感觉", score: 2 },
-    { id: "sometimes", label: "偶尔会", score: 1 },
+    { id: "often", label: "经常", score: 2 },
+    { id: "sometimes", label: "偶尔", score: 1 },
     { id: "rarely", label: "基本没有", score: 0 }
   ];
 
   return {
-    version: "0.1",
+    version: "0.2",
     title: "生活与心情小调查",
-    subtitle: "花 2～3 分钟，了解一下您最近的生活状态。没有标准答案，按真实感受选择就好。",
-    duration: "约 15 题，2～3 分钟",
+    subtitle: "按真实感受点就好。",
+    duration: "大约 3 分钟",
     questions: [
       {
         id: "q1",
         field: "年龄段",
-        kicker: "先了解一下基本情况",
-        title: "您的年龄大概是？",
+        title: "您今年多大？",
         type: "single",
         scored: false,
         options: [
@@ -35,13 +34,13 @@
           { id: "55", label: "55～59岁" },
           { id: "60", label: "60～64岁" },
           { id: "65", label: "65～69岁" },
-          { id: "70", label: "70岁及以上" }
+          { id: "70", label: "70岁以上" }
         ]
       },
       {
         id: "q2",
         field: "居住",
-        title: "您目前主要和谁一起生活？",
+        title: "和谁一起住？",
         type: "single",
         scored: false,
         options: [
@@ -55,21 +54,20 @@
       {
         id: "q3",
         field: "生活状态",
-        title: "您现在的生活状态，更接近哪一种？",
+        title: "现在的日子？",
         type: "single",
         scored: false,
         options: [
           { id: "work", label: "还在工作" },
-          { id: "semi", label: "半退休·偶尔工作" },
+          { id: "semi", label: "偶尔工作" },
           { id: "retired", label: "已退休" },
-          { id: "home", label: "主要照顾家庭" }
+          { id: "home", label: "照顾家庭" }
         ]
       },
       {
         id: "q4",
         field: "Q4",
-        kicker: "下面是最近的生活感受",
-        title: "最近，您会觉得孤单吗？",
+        title: "最近孤单吗？",
         type: "single",
         scored: true,
         options: often.slice()
@@ -77,7 +75,7 @@
       {
         id: "q5",
         field: "Q5",
-        title: "您会觉得心里话不知道跟谁说吗？",
+        title: "心里话没处说吗？",
         type: "single",
         scored: true,
         options: often.slice()
@@ -85,31 +83,23 @@
       {
         id: "q6",
         field: "Q6",
-        title: "您会想很多事情，放不下来吗？",
+        title: "事情放不下吗？",
         type: "single",
         scored: true,
-        options: [
-          { id: "often", label: "经常会", score: 2 },
-          { id: "sometimes", label: "偶尔会", score: 1 },
-          { id: "rarely", label: "基本没有", score: 0 }
-        ]
+        options: often.slice()
       },
       {
         id: "q7",
         field: "Q7",
-        title: "您会觉得心烦、委屈，或者心情低落吗？",
+        title: "会心烦、委屈吗？",
         type: "single",
         scored: true,
-        options: [
-          { id: "often", label: "经常有", score: 2 },
-          { id: "sometimes", label: "偶尔有", score: 1 },
-          { id: "rarely", label: "基本没有", score: 0 }
-        ]
+        options: often.slice()
       },
       {
         id: "q8",
         field: "Q8",
-        title: "遇到不开心的事，您能自己慢慢调节过来吗？",
+        title: "能自己缓过来吗？",
         type: "single",
         scored: true,
         reverse: true,
@@ -122,19 +112,15 @@
       {
         id: "q9",
         field: "Q9",
-        title: "您会为家人的事情操心吗？",
+        title: "为家人操心吗？",
         type: "single",
         scored: true,
-        options: [
-          { id: "often", label: "经常会", score: 2 },
-          { id: "sometimes", label: "偶尔会", score: 1 },
-          { id: "rarely", label: "基本没有", score: 0 }
-        ]
+        options: often.slice()
       },
       {
         id: "q10",
         field: "Q10",
-        title: "就算身边有人，您也会觉得不太被理解吗？",
+        title: "有人在，仍不被懂吗？",
         type: "single",
         scored: true,
         options: often.slice()
@@ -142,7 +128,7 @@
       {
         id: "q11",
         field: "Q11",
-        title: "您和朋友、老同事还会经常联系、聊聊天吗？",
+        title: "还和朋友联系吗？",
         type: "single",
         scored: true,
         options: [
@@ -154,7 +140,7 @@
       {
         id: "q12",
         field: "Q12",
-        title: "您会觉得日子有些单调吗？",
+        title: "日子单调吗？",
         type: "single",
         scored: true,
         options: often.slice()
@@ -162,7 +148,7 @@
       {
         id: "q13",
         field: "Q13",
-        title: "您还想学一点新东西吗？",
+        title: "想学新东西吗？",
         type: "single",
         scored: true,
         options: [
@@ -174,12 +160,12 @@
       {
         id: "q14",
         field: "Q14",
-        title: "退休，或者在家里的角色退后之后，您会不知道接下来做什么吗？",
+        title: "不知接下来做什么？",
         type: "single",
         scored: true,
         options: [
-          { id: "often", label: "经常有这种感觉", score: 2 },
-          { id: "sometimes", label: "偶尔会", score: 1 },
+          { id: "often", label: "经常", score: 2 },
+          { id: "sometimes", label: "偶尔", score: 1 },
           { id: "rarely", label: "很少", score: 0 }
         ]
       },
@@ -187,8 +173,8 @@
         id: "q15",
         field: "Q15",
         kicker: "最后一题",
-        title: "如果接下来有一些轻松的安排，您最感兴趣的是？",
-        help: "可以选 1 到 3 项。选「暂时都不需要」时，不用再选别的。",
+        title: "想参加什么？",
+        help: "最多选 3 项",
         type: "multi",
         max: 3,
         exclusive: "none",

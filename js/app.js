@@ -19,6 +19,14 @@
     showRetry: false,
     submitting: false
   };
+  var advanceTimer = null;
+
+  function clearAdvance() {
+    if (advanceTimer) {
+      clearTimeout(advanceTimer);
+      advanceTimer = null;
+    }
+  }
 
   function escapeHtml(text) {
     return String(text)
@@ -53,7 +61,6 @@
         '<h1>' + escapeHtml(content.title) + '</h1>' +
         '<p class="lede">' + escapeHtml(content.subtitle) + '</p>' +
         '<p class="duration">' + escapeHtml(content.duration) + '</p>' +
-        '<p class="quiet">不用登录，也不用打字，点一点就可以。</p>' +
       '</header>',
       '<button type="button" class="btn-primary" id="start">开始</button>'
     );
@@ -69,7 +76,7 @@
     var total = questions.length;
     var width = Math.round((current / total) * 100);
     return '<div class="progress" role="progressbar" aria-valuemin="1" aria-valuemax="' + total + '" aria-valuenow="' + current + '" aria-valuetext="第 ' + current + ' 题，共 ' + total + ' 题">' +
-      '<div class="progress-row"><span>第 ' + current + ' 题</span><span>共 ' + total + ' 题</span></div>' +
+      '<div class="progress-row"><span>第 ' + current + ' 题</span></div>' +
       '<div class="track"><div class="fill" style="width:' + width + '%"></div></div>' +
     '</div>';
   }
@@ -83,12 +90,17 @@
   }
 
   function renderQuestion() {
+    clearAdvance();
     var q = question();
-    var last = state.index === questions.length - 1;
     var options = q.options.map(function (option) { return optionMarkup(q, option); }).join("");
     var help = q.help ? '<p class="help" id="question-help">' + escapeHtml(q.help) + '</p>' : "";
     var count = q.type === "multi" ? '<p class="count" id="pick-count"></p>' : "";
-    var kicker = q.kicker ? '<p class="kicker">' + escapeHtml(q.kicker) + '</p>' : '<p class="kicker kicker-spacer"></p>';
+    var kicker = q.kicker ? '<p class="kicker">' + escapeHtml(q.kicker) + '</p>' : "";
+    var foot = '<p class="hint" id="hint" role="status"></p>';
+    if (q.type === "multi") {
+      foot += '<button type="button" class="btn-primary" id="done">选好了</button>';
+    }
+    foot += '<button type="button" class="btn-text" id="back">' + (state.index === 0 ? "返回" : "上一题") + '</button>';
     shell(
       progressMarkup(state.index) +
       '<div class="question">' +
@@ -98,9 +110,7 @@
         '<div class="options" role="group" aria-labelledby="question-title">' + options + '</div>' +
         count +
       '</div>',
-      '<p class="hint" id="hint" role="status"></p>' +
-      '<button type="button" class="btn-primary" id="next">' + (last ? "完成" : "下一题") + '</button>' +
-      '<button type="button" class="btn-ghost" id="back">' + (state.index === 0 ? "返回" : "上一题") + '</button>'
+      foot
     );
     updateCount();
     document.querySelectorAll(".option").forEach(function (button) {
@@ -108,17 +118,20 @@
         choose(q, button.getAttribute("data-option"));
       });
     });
-    document.getElementById("next").addEventListener("click", goNext);
+    var done = document.getElementById("done");
+    if (done) done.addEventListener("click", finishMulti);
     document.getElementById("back").addEventListener("click", goBack);
     var title = document.getElementById("question-title");
     if (title && title.focus) title.focus({ preventScroll: true });
+    var main = document.getElementById("main");
+    if (main) main.scrollTop = 0;
   }
 
   function updateCount() {
     var q = question();
     var node = document.getElementById("pick-count");
     if (!node || q.type !== "multi") return;
-    node.textContent = "已选 " + selectedIds(q).length + " 项，最多 " + q.max + " 项";
+    node.textContent = "已选 " + selectedIds(q).length + " 项";
   }
 
   function syncPressed(q) {
@@ -140,6 +153,7 @@
       state.answers[q.id] = optionId;
       syncPressed(q);
       showHint("");
+      scheduleAdvance(state.index);
       return;
     }
     var selected = selectedIds(q);
@@ -151,7 +165,7 @@
     } else {
       selected = selected.filter(function (id) { return id !== q.exclusive; });
       if (selected.length >= q.max) {
-        showHint("最多选 " + q.max + " 项。可以先点已选的，取消一项。");
+        showHint("最多选 3 项。先点掉一项。");
         return;
       }
       selected.push(optionId);
@@ -161,7 +175,22 @@
     showHint("");
   }
 
+  function scheduleAdvance(fromIndex) {
+    clearAdvance();
+    advanceTimer = setTimeout(function () {
+      advanceTimer = null;
+      if (state.screen !== "question" || state.index !== fromIndex) return;
+      if (fromIndex < questions.length - 1) {
+        state.index += 1;
+        render();
+        return;
+      }
+      complete();
+    }, 220);
+  }
+
   function goBack() {
+    clearAdvance();
     if (state.index === 0) {
       state.screen = "welcome";
     } else {
@@ -170,12 +199,13 @@
     render();
   }
 
-  function goNext() {
+  function finishMulti() {
     var q = question();
     if (!isAnswered(q)) {
-      showHint(q.type === "multi" ? "请至少选一项。" : "请先选一个最接近的。");
+      showHint("请先选一项。");
       return;
     }
+    clearAdvance();
     if (state.index < questions.length - 1) {
       state.index += 1;
       render();
@@ -186,7 +216,7 @@
 
   function recordMessage(result) {
     if (result && result.channel !== "local" && result.feishu === false) {
-      return "选择已留在这台设备上。送到记录处时没成功，可以再试一次。";
+      return "这次没送到。已留在手机上。";
     }
     return "已记录本次选择";
   }
@@ -235,7 +265,7 @@
     shell(
       '<header class="hero hero-result">' +
         '<div class="seal" aria-hidden="true"><span>安</span></div>' +
-        '<h1>给您的几句话</h1>' +
+        '<h1>给您</h1>' +
       '</header>' +
       '<div class="feedback" id="feedback">' + lines + '</div>',
       '<button type="button" class="btn-ghost" id="restart">再填一次</button>' +

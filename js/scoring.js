@@ -33,17 +33,17 @@
     { id: "social", name: "社交连接", code: "D", typeName: "社交缺失型", priority: 6, questions: ["q11"] }
   ];
 
-  var FIXED_LINE = "接下来会根据大家的真实需要安排聊天、兴趣、健康和生活成长方面的活动。";
-  var THANKS_LINE = "谢谢您按真实感受做了选择。";
+  var FIXED_LINE = "后面会安排聊天、兴趣和养生。";
+  var THANKS_LINE = "谢谢您。";
 
   var FEEDBACK = {
-    low: "听下来，您最近的日子大体是安稳的，有人说说话、做些喜欢的小事就很好。",
-    companion: "听下来，您最近比较希望有人陪着说说话，心里的事慢慢讲出来，人会松快一些。",
-    family: "家里的事常常放在心上，也希望家里人能多懂您一点，这些都可以慢慢说开。",
-    emotion: "最近心里装的事有点多，找人聊一聊、慢慢缓一缓，都会好一些。",
-    social: "您似乎想和朋友多走动走动，人与人说说话，日子会更热闹一些。",
-    interest: "日子如果有些单调，添一两件新鲜小事，生活会重新有滋味。",
-    meaning: "您还想把接下来的日子过得更有意思，也愿意学一点新东西，这种心思很珍贵。"
+    low: "最近日子大体安稳。",
+    companion: "您想有人说说话。",
+    family: "家里的事，希望有人懂。",
+    emotion: "心里的事有点多，聊聊会好。",
+    social: "您想多和朋友走动。",
+    interest: "添件小事，日子就有滋味。",
+    meaning: "您还想把日子过得有意思。"
   };
 
   var FOLLOW = {
@@ -143,16 +143,16 @@
     if (top.id === "interest") {
       var health = selection.ids.indexOf("health") !== -1;
       var hobby = selection.ids.indexOf("hobby") !== -1;
-      if (health && !hobby) return "您对健康养生有兴趣，适合从轻松的活动慢慢做起。";
-      if (hobby && !health) return "您对兴趣活动有兴趣，适合从喜欢的小事慢慢做起。";
-      return "您想给生活添一点兴趣和养生，适合从轻松的活动慢慢做起。";
+      if (health && !hobby) return "您想做做养生。";
+      if (hobby && !health) return "您想参加兴趣活动。";
+      return "您想给生活添点兴趣。";
     }
     var lines = {
-      companion: "您希望有人倾听、聊聊天，我们会把轻松的聊天放在心里。",
-      emotion: "您想把心情调得顺一点，聊天和放松的活动都可以慢慢来。",
-      family: "您关心家里的关系，有机会可以在轻松的场合慢慢聊。",
-      social: "您想多认识朋友、多走动，我们会留意这类轻松的活动。",
-      meaning: "您想学一点新东西，这种心思很珍贵，可以慢慢来。"
+      companion: "您想有人听您说说话。",
+      emotion: "您想把心情调顺一些。",
+      family: "您关心家里的关系。",
+      social: "您想多认识朋友。",
+      meaning: "您想学点新东西。"
     };
     return lines[top.id] || FEEDBACK[top.id];
   }
