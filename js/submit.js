@@ -357,7 +357,30 @@
     });
   }
 
+  /* 打开页面时，把之前没送达的那一份再补发一次 */
+  function retryPending(configOverride) {
+    var pending = readStore(PENDING_KEY);
+    if (!pending || !pending.fields) return Promise.resolve(null);
+    var cfg = readConfig(configOverride);
+    var plan = deliveryPlan(cfg);
+    if (plan === "local") return Promise.resolve(null);
+    var request = plan === "bitable" ? sendBitable(cfg, pending) : sendWebhook(cfg, pending);
+    return request.then(function (result) {
+      if (result && result.ok) {
+        var still = readStore(PENDING_KEY);
+        if (still && still.userId === pending.userId) removeStore(PENDING_KEY);
+        calmLog("上次没送达的选择已补发。");
+      }
+      return result;
+    });
+  }
+
+  if (typeof window !== "undefined" && typeof setTimeout === "function") {
+    setTimeout(function () { try { retryPending(); } catch (err) { /* 忽略 */ } }, 1500);
+  }
+
   return {
+    retryPending: retryPending,
     LAST_KEY: LAST_KEY,
     PENDING_KEY: PENDING_KEY,
     createUserId: createUserId,
