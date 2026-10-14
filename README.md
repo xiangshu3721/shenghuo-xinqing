@@ -6,9 +6,13 @@
 
 ## 线上页面
 
-GitHub Pages 从 `main` 分支根目录发布：
+静态文件在 `main` 根目录。到仓库 Settings → Pages，Build and deployment 选择 Deploy from a branch，分支选 `main`，文件夹选 `/ (root)`，保存。
+
+发布地址：
 
 https://xiangshu3721.github.io/shenghuo-xinqing/
+
+当前自动化令牌没有 Pages 管理权限，需要在上面的设置页手动打开一次。
 
 本地预览：
 
