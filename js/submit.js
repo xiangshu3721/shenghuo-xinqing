@@ -14,6 +14,9 @@
 })(typeof window !== "undefined" ? window : null, function () {
   var LAST_KEY = "shenghuo-xinqing:last";
   var PENDING_KEY = "shenghuo-xinqing:pending";
+  var SENT_KEY = "shenghuo-xinqing:sent";
+  /* 同一次提交进行中：避免双击 / pending 补发 / sendBeacon 重复打飞书 */
+  var inflight = null;
 
   function pad(n) {
     return String(n).padStart(2, "0");
@@ -24,6 +27,66 @@
     var stamp = d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
     var rand = Math.random().toString(36).slice(2, 8);
     return "sx" + stamp + rand;
+  }
+
+  function createSubmissionId() {
+    try {
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return "sub-" + crypto.randomUUID();
+      }
+    } catch (err) {
+      /* 忽略 */
+    }
+    return "sub-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+
+  function submissionKey(payload) {
+    if (!payload) return "";
+    return String(payload.submissionId || payload.userId || "");
+  }
+
+  function readSession(key) {
+    try {
+      if (typeof sessionStorage === "undefined") return null;
+      var raw = sessionStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeSession(key, value) {
+    try {
+      if (typeof sessionStorage === "undefined") return;
+      sessionStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      /* 隐私模式可能禁用，不影响看结果 */
+    }
+  }
+
+  function hasSent(id) {
+    if (!id) return false;
+    var list = readSession(SENT_KEY);
+    if (!Array.isArray(list)) return false;
+    return list.indexOf(id) !== -1;
+  }
+
+  function markSent(id) {
+    if (!id) return;
+    var list = readSession(SENT_KEY);
+    if (!Array.isArray(list)) list = [];
+    if (list.indexOf(id) === -1) list.push(id);
+    if (list.length > 40) list = list.slice(-40);
+    writeSession(SENT_KEY, list);
+  }
+
+  function clearPendingIfMatch(payload) {
+    var pending = readStore(PENDING_KEY);
+    if (!pending) return;
+    var a = submissionKey(pending);
+    var b = submissionKey(payload);
+    if (a && b && a === b) removeStore(PENDING_KEY);
+    else if (pending.userId && payload && pending.userId === payload.userId) removeStore(PENDING_KEY);
   }
 
   function formatLocalTime(date) {
@@ -145,6 +208,7 @@
     var payload = {
       version: "0.1",
       userId: meta.userId || createUserId(submitted),
+      submissionId: meta.submissionId || createSubmissionId(),
       submittedAt: submitted.toISOString(),
       submittedAtLocal: formatLocalTime(submitted),
       answers: packed,
@@ -328,49 +392,92 @@
 
   function finishLocal(payload, channel, feishuOk) {
     writeStore(LAST_KEY, payload);
-    if (feishuOk || channel === "local") removeStore(PENDING_KEY);
-    else writeStore(PENDING_KEY, payload);
+    if (feishuOk || channel === "local") {
+      markSent(submissionKey(payload));
+      clearPendingIfMatch(payload);
+      removeStore(PENDING_KEY);
+    } else {
+      writeStore(PENDING_KEY, payload);
+    }
     return {
       ok: true,
       channel: channel,
       feishu: feishuOk,
       storedLocal: true,
-      userId: payload.userId
+      userId: payload.userId,
+      submissionId: payload.submissionId || null
     };
   }
 
   function submitSurvey(payload, configOverride) {
     var cfg = readConfig(configOverride);
     var plan = deliveryPlan(cfg);
+    var key = submissionKey(payload);
     writeStore(LAST_KEY, payload);
+
+    if (hasSent(key)) {
+      clearPendingIfMatch(payload);
+      return Promise.resolve({
+        ok: true,
+        channel: plan,
+        feishu: plan !== "local",
+        storedLocal: true,
+        userId: payload.userId,
+        submissionId: payload.submissionId || null,
+        deduped: true
+      });
+    }
+
+    if (inflight && inflight.key === key) {
+      return inflight.promise;
+    }
+    /* 已有任意提交在飞：同会话第二次点击 / pending 补发都挂到同一把锁上，避免双发 */
+    if (inflight) {
+      return inflight.promise.then(function () {
+        return submitSurvey(payload, configOverride);
+      });
+    }
+
     if (plan === "local") {
       removeStore(PENDING_KEY);
+      markSent(key);
       return Promise.resolve(finishLocal(payload, "local", false));
     }
+
     var request = plan === "bitable" ? sendBitable(cfg, payload) : sendWebhook(cfg, payload);
-    return request.then(function (result) {
+    var promise = request.then(function (result) {
       if (result && result.ok) return finishLocal(payload, plan, true);
       if (!result || result.reason !== "bad-url") {
         calmLog("飞书这次没有收下，选择已留在本机，可以再试一次。");
       }
       return finishLocal(payload, plan, false);
+    }).then(function (out) {
+      if (inflight && inflight.key === key) inflight = null;
+      return out;
+    }, function (err) {
+      if (inflight && inflight.key === key) inflight = null;
+      throw err;
     });
+    inflight = { key: key, promise: promise };
+    return promise;
   }
 
-  /* 打开页面时，把之前没送达的那一份再补发一次 */
+  /* 打开页面时，把之前没送达的那一份再补发一次；与正在进行的 submit 互斥 */
   function retryPending(configOverride) {
+    if (inflight) return Promise.resolve(null);
     var pending = readStore(PENDING_KEY);
     if (!pending || !pending.fields) return Promise.resolve(null);
+    var key = submissionKey(pending);
+    if (hasSent(key)) {
+      removeStore(PENDING_KEY);
+      return Promise.resolve(null);
+    }
     var cfg = readConfig(configOverride);
     var plan = deliveryPlan(cfg);
     if (plan === "local") return Promise.resolve(null);
-    var request = plan === "bitable" ? sendBitable(cfg, pending) : sendWebhook(cfg, pending);
-    return request.then(function (result) {
-      if (result && result.ok) {
-        var still = readStore(PENDING_KEY);
-        if (still && still.userId === pending.userId) removeStore(PENDING_KEY);
-        calmLog("上次没送达的选择已补发。");
-      }
+    /* 走 submitSurvey，复用 in-flight / sent 去重，避免与 fresh submit 双发 */
+    return submitSurvey(pending, configOverride).then(function (result) {
+      if (result && result.feishu) calmLog("上次没送达的选择已补发。");
       return result;
     });
   }
@@ -383,7 +490,9 @@
     retryPending: retryPending,
     LAST_KEY: LAST_KEY,
     PENDING_KEY: PENDING_KEY,
+    SENT_KEY: SENT_KEY,
     createUserId: createUserId,
+    createSubmissionId: createSubmissionId,
     readConfig: readConfig,
     deliveryPlan: deliveryPlan,
     buildPayload: buildPayload,
@@ -391,6 +500,7 @@
     buildFeishuText: buildFeishuText,
     submitSurvey: submitSurvey,
     readLast: function () { return readStore(LAST_KEY); },
-    readPending: function () { return readStore(PENDING_KEY); }
+    readPending: function () { return readStore(PENDING_KEY); },
+    hasSent: hasSent
   };
 });

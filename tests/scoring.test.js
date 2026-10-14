@@ -317,6 +317,23 @@ run("题目数量与多选上限", function () {
   assert.strictEqual(q15.options.length, 8);
 });
 
+run("payload 含稳定 submissionId", function () {
+  var answers = withScores({ q4: 2, q5: 1 }, { q15: ["listen"] });
+  var profile = scoring.scoreSurvey(answers, questions);
+  var fixed = submitApi.buildPayload(answers, profile, questions, {
+    userId: "sx-sub",
+    submissionId: "sub-fixed-1",
+    submittedAt: "2026-10-14T02:00:00.000Z"
+  });
+  assert.strictEqual(fixed.submissionId, "sub-fixed-1");
+  var auto = submitApi.buildPayload(answers, profile, questions, {
+    userId: "sx-sub2",
+    submittedAt: "2026-10-14T02:00:00.000Z"
+  });
+  assert.ok(String(auto.submissionId).indexOf("sub-") === 0);
+  assert.ok(typeof submitApi.createSubmissionId() === "string");
+});
+
 var answersForSubmit = withScores({ q4: 2, q5: 2 });
 var payloadForSubmit = submitApi.buildPayload(
   answersForSubmit,
@@ -336,7 +353,34 @@ Promise.all([
   assert.strictEqual(results[1].channel, "webhook");
   assert.strictEqual(results[1].feishu, false);
   console.log("  ok  空地址或无效地址仍完成本地结果");
-  console.log("全部抽样通过");
+
+  var store = {};
+  global.sessionStorage = {
+    getItem: function (k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },
+    setItem: function (k, v) { store[k] = String(v); },
+    removeItem: function (k) { delete store[k]; }
+  };
+  var dedupeAnswers = withScores({ q4: 2, q5: 2 });
+  var dedupePayload = submitApi.buildPayload(
+    dedupeAnswers,
+    scoring.scoreSurvey(dedupeAnswers, questions),
+    questions,
+    { userId: "sx-dedupe", submissionId: "sub-dedupe-1", submittedAt: "2026-10-14T02:00:00.000Z" }
+  );
+  return submitApi.submitSurvey(dedupePayload, { FEISHU_WEBHOOK_URL: "" }).then(function (first) {
+    assert.strictEqual(first.ok, true);
+    assert.strictEqual(submitApi.hasSent("sub-dedupe-1"), true);
+    return submitApi.submitSurvey(dedupePayload, { FEISHU_WEBHOOK_URL: "https://example.com/hook" });
+  }).then(function (second) {
+    assert.strictEqual(second.deduped, true);
+    assert.strictEqual(second.ok, true);
+    console.log("  ok  同 submissionId 二次提交去重");
+    return submitApi.retryPending({ FEISHU_WEBHOOK_URL: "https://example.com/hook" });
+  }).then(function (pendingResult) {
+    assert.strictEqual(pendingResult, null);
+    console.log("  ok  已 sent 时 pending 补发跳过");
+    console.log("全部抽样通过");
+  });
 }).catch(function (err) {
   console.error(err);
   process.exit(1);

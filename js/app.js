@@ -17,7 +17,8 @@
     payload: null,
     recordNote: "",
     showRetry: false,
-    submitting: false
+    submitting: false,
+    submitted: false
   };
   var advanceTimer = null;
 
@@ -200,6 +201,7 @@
   }
 
   function finishMulti() {
+    if (state.submitting || state.submitted || state.payload) return;
     var q = question();
     if (!isAnswered(q)) {
       showHint("请先选一项。");
@@ -210,6 +212,13 @@
       state.index += 1;
       render();
       return;
+    }
+    /* 立刻锁住「选好了」，避免双击 / 触摸+点击各触发一次 */
+    state.submitting = true;
+    var done = document.getElementById("done");
+    if (done) {
+      done.disabled = true;
+      done.setAttribute("aria-busy", "true");
     }
     complete();
   }
@@ -222,12 +231,17 @@
   }
 
   function complete() {
+    /* 已提交成功，或本轮已建过 payload：忽略双击第二次 */
+    if (state.submitted || state.payload) return;
+    state.submitting = true;
     state.profile = scoring.scoreSurvey(state.answers, questions);
-    state.payload = submitApi.buildPayload(state.answers, state.profile, questions);
+    var submissionId = submitApi.createSubmissionId();
+    state.payload = submitApi.buildPayload(state.answers, state.profile, questions, {
+      submissionId: submissionId
+    });
     var plan = submitApi.deliveryPlan(submitApi.readConfig());
     state.recordNote = plan === "local" ? "已记录本次选择" : "正在记下这次选择…";
     state.showRetry = false;
-    state.submitting = plan !== "local";
     state.screen = "result";
     render();
     submitApi.submitSurvey(state.payload).then(function (result) {
@@ -235,26 +249,43 @@
       state.recordNote = recordMessage(result);
       state.showRetry = result.channel !== "local" && result.feishu === false;
       state.submitting = false;
+      /* 成功送出或本机完成：同会话不再重发；失败留 pending 可点「再试一次」 */
+      if (result.channel === "local" || result.feishu || result.deduped) {
+        state.submitted = true;
+      }
       var note = document.getElementById("record-note");
       if (note) note.textContent = state.recordNote;
       var retry = document.getElementById("retry");
-      if (retry) retry.hidden = !state.showRetry;
+      if (retry) {
+        retry.hidden = !state.showRetry;
+        retry.disabled = false;
+      }
     });
   }
 
   function retrySend() {
-    if (!state.payload || state.submitting) return;
+    if (!state.payload || state.submitting || state.submitted) return;
     state.submitting = true;
     state.recordNote = "正在记下这次选择…";
     var note = document.getElementById("record-note");
     if (note) note.textContent = state.recordNote;
+    var retryBtn = document.getElementById("retry");
+    if (retryBtn) {
+      retryBtn.disabled = true;
+      retryBtn.setAttribute("aria-busy", "true");
+    }
     submitApi.submitSurvey(state.payload).then(function (result) {
       state.submitting = false;
       state.recordNote = recordMessage(result);
       state.showRetry = result.channel !== "local" && result.feishu === false;
+      if (result.feishu || result.deduped) state.submitted = true;
       if (note) note.textContent = state.recordNote;
       var retry = document.getElementById("retry");
-      if (retry) retry.hidden = !state.showRetry;
+      if (retry) {
+        retry.hidden = !state.showRetry;
+        retry.disabled = false;
+        retry.removeAttribute("aria-busy");
+      }
     });
   }
 
@@ -280,6 +311,8 @@
       state.payload = null;
       state.recordNote = "";
       state.showRetry = false;
+      state.submitting = false;
+      state.submitted = false;
       render();
     });
     var retry = document.getElementById("retry");
