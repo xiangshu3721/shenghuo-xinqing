@@ -259,6 +259,37 @@
     });
   }
 
+  /* 妙搭 Webhook 不回 CORS 头，预检(OPTIONS)会被 302 到登录页；
+     用 text/plain + no-cors 的“简单请求”避开预检，响应不可读，发出即视为成功。 */
+  function postSimple(url, body, timeoutMs) {
+    var text = JSON.stringify(body);
+    var fetcher = typeof fetch === "function" ? fetch : null;
+    if (!fetcher) {
+      if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+        var sent = navigator.sendBeacon(url, new Blob([text], { type: "text/plain;charset=UTF-8" }));
+        return Promise.resolve({ ok: !!sent, reason: sent ? "beacon" : "beacon-failed" });
+      }
+      return Promise.resolve({ ok: false, reason: "no-fetch" });
+    }
+    var ctrl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, timeoutMs || 10000) : null;
+    return fetcher(url, {
+      method: "POST",
+      mode: "no-cors",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: text,
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function () {
+      return { ok: true, status: 0, opaque: true };
+    }).catch(function () {
+      return { ok: false, reason: "network" };
+    }).then(function (result) {
+      if (timer) clearTimeout(timer);
+      return result;
+    });
+  }
+
   function calmLog(message) {
     if (typeof console !== "undefined" && console.info) {
       console.info("[生活与心情小调查] " + message);
@@ -271,6 +302,7 @@
       return Promise.resolve({ ok: false, reason: "bad-url" });
     }
     var mode = cfg.webhookMode === "bitable" ? "bitable" : "bot";
+    if (mode === "bitable") return postSimple(cfg.webhookUrl, buildFeishuBody(payload, mode));
     return postJson(cfg.webhookUrl, buildFeishuBody(payload, mode));
   }
 
