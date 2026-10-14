@@ -135,3 +135,9 @@ FEISHU_WEBHOOK_MODE: "bitable",
 - 规则是固定文案，不会调用大模型改写总结。
 - 内部标记只表示「建议优先安排聊天」，不是医疗判断。
 - 刷新页面会从头开始；做完后的最后一次结果仍留在本机存储里。
+
+
+## 需求洞察（管理员）
+
+- 入口：`insights.html`（不在老人问卷流程内），跳转到妙搭应用 `/insights` 页面（需飞书登录）。
+- 后端：妙搭应用 app_17g16djq8cb，`POST /api/insights/generate`、`GET /api/insights/latest`、`GET /api/insights/history`；报告存飞书表「群体洞察报告」。
