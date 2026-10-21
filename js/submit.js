@@ -64,20 +64,23 @@
     }
   }
 
+  /* 已送出的提交编号：会话 + 本机持久各记一份，刷新/新开页/补发都不会再发同一编号 */
   function hasSent(id) {
     if (!id) return false;
-    var list = readSession(SENT_KEY);
-    if (!Array.isArray(list)) return false;
-    return list.indexOf(id) !== -1;
+    var a = readSession(SENT_KEY);
+    var b = readStore(SENT_KEY);
+    return (Array.isArray(a) && a.indexOf(id) !== -1) || (Array.isArray(b) && b.indexOf(id) !== -1);
   }
 
   function markSent(id) {
     if (!id) return;
-    var list = readSession(SENT_KEY);
-    if (!Array.isArray(list)) list = [];
-    if (list.indexOf(id) === -1) list.push(id);
-    if (list.length > 40) list = list.slice(-40);
-    writeSession(SENT_KEY, list);
+    [[readSession, writeSession], [readStore, writeStore]].forEach(function (rw) {
+      var list = rw[0](SENT_KEY);
+      if (!Array.isArray(list)) list = [];
+      if (list.indexOf(id) === -1) list.push(id);
+      if (list.length > 40) list = list.slice(-40);
+      rw[1](SENT_KEY, list);
+    });
   }
 
   function clearPendingIfMatch(payload) {
@@ -394,6 +397,7 @@
     writeStore(LAST_KEY, payload);
     if (feishuOk || channel === "local") {
       markSent(submissionKey(payload));
+      if (payload && payload.userId) markSent(String(payload.userId)); /* 表里的提交编号也记一份 */
       clearPendingIfMatch(payload);
       removeStore(PENDING_KEY);
     } else {
@@ -415,7 +419,7 @@
     var key = submissionKey(payload);
     writeStore(LAST_KEY, payload);
 
-    if (hasSent(key)) {
+    if (hasSent(key) || (payload && payload.userId && hasSent(String(payload.userId)))) {
       clearPendingIfMatch(payload);
       return Promise.resolve({
         ok: true,
@@ -468,7 +472,7 @@
     var pending = readStore(PENDING_KEY);
     if (!pending || !pending.fields) return Promise.resolve(null);
     var key = submissionKey(pending);
-    if (hasSent(key)) {
+    if (hasSent(key) || (pending.userId && hasSent(String(pending.userId)))) {
       removeStore(PENDING_KEY);
       return Promise.resolve(null);
     }
