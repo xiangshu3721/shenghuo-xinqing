@@ -8,6 +8,9 @@
   var submitApi = window.SurveySubmit;
   var questions = content.questions;
   var root = document.getElementById("app");
+  /* 题目刚换上来的一小会儿不接受点按：防止双击把下一题也点了 */
+  var TAP_GUARD_MS = 400;
+  var renderedAt = 0;
 
   var state = {
     screen: "welcome",
@@ -114,8 +117,10 @@
       foot
     );
     updateCount();
+    renderedAt = Date.now();
     document.querySelectorAll(".option").forEach(function (button) {
       button.addEventListener("click", function () {
+        if (Date.now() - renderedAt < TAP_GUARD_MS) return;
         choose(q, button.getAttribute("data-option"));
       });
     });
@@ -187,7 +192,7 @@
         return;
       }
       complete();
-    }, 220);
+    }, 400); /* 让老人看清自己点中了，再翻下一题 */
   }
 
   function goBack() {
